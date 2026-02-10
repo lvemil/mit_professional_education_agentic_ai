@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy-Pulse MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .galaxy-card { background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+    </style>
+</head>
+<body class="max-w-md mx-auto pb-20">
+
+    <header class="p-4 flex justify-between items-center border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+        <h1 class="text-xl font-bold text-cyan-400">Copy-Pulse</h1>
+        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">JD</div>
+    </header>
+
+    <main class="p-4 space-y-6">
+        
+        <section class="space-y-4">
+            <h2 class="text-lg font-semibold">Sube tu Cartera en 1 Minuto</h2>
+            <div class="bg-slate-800 p-4 rounded-xl space-y-3">
+                <div class="flex gap-2">
+                    <input id="assetInput" type="text" placeholder="Ej: BTC, TSLA, AAPL" class="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm outline-none focus:border-cyan-500">
+                    <input id="percentInput" type="number" placeholder="%" class="w-20 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm outline-none focus:border-cyan-500">
+                    <button onclick="addAsset()" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded font-bold text-sm">+</button>
+                </div>
+                <div id="assetList" class="text-xs space-y-2 max-h-32 overflow-y-auto">
+                    </div>
+                <button onclick="analyze()" class="w-full bg-white text-slate-900 py-3 rounded-lg font-bold shadow-lg shadow-cyan-900/20 active:scale-95 transition-transform">
+                    Analizar Cartera
+                </button>
+            </div>
+        </section>
+
+        <div id="resultsArea" class="hidden space-y-6">
+            
+            <section class="text-center p-6 galaxy-card rounded-3xl border border-slate-700">
+                <h3 class="text-sm uppercase tracking-widest text-slate-400 mb-2">Tu Índice de Inteligencia de Retorno</h3>
+                <div class="text-4xl font-extrabold mb-1">Notable ⭐⭐⭐</div>
+                <div class="w-full bg-slate-700 h-2 rounded-full mt-4 overflow-hidden">
+                    <div id="healthBar" class="bg-cyan-400 h-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3 italic">"Tu riesgo está muy bien compensado"</p>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-lg font-semibold italic">Tu Universo de Inversiones</h3>
+                <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <canvas id="galaxyChart"></canvas>
+                </div>
+                <div class="p-3 bg-red-900/20 border border-red-900/50 rounded-lg">
+                    <p class="text-xs text-red-200">⚠️ <strong>Max Drawdown Est.: -15%</strong>. Escenario de estrés histórico detectado.</p>
+                </div>
+            </section>
+
+            <section class="space-y-4 pb-10">
+                <h3 class="text-lg font-semibold">Benchmark Social</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border-l-4 border-cyan-500">
+                        <span class="text-sm font-medium">Inversor Top (Growth)</span>
+                        <span class="text-cyan-400 font-bold">+18.5%</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                        <span class="text-sm">Tu Cartera</span>
+                        <span id="userYield" class="font-bold text-slate-300">--</span>
+                    </div>
+                </div>
+                <button class="w-full py-4 border-2 border-cyan-500 text-cyan-400 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-cyan-500/10">
+                    Optimizar mi Cartera
+                </button>
+            </section>
+        </div>
+    </main>
+
+    <nav class="fixed bottom-0 w-full max-w-md bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-[10px] text-slate-500">
+        <div class="flex flex-col items-center text-cyan-400"><span>🏠</span><span>Inicio</span></div>
+        <div class="flex flex-col items-center"><span>🌐</span><span>Comunidad</span></div>
+        <div class="flex flex-col items-center"><span>🔔</span><span>Alertas</span></div>
+        <div class="flex flex-col items-center"><span>👤</span><span>Perfil</span></div>
+    </nav>
+
+    <script>
+        let portfolio = [];
+        let galaxyChart;
+
+        function addAsset() {
+            const asset = document.getElementById('assetInput').value.toUpperCase();
+            const percent = parseInt(document.getElementById('percentInput').value);
+
+            if(asset && percent) {
+                portfolio.push({ asset, percent });
+                updateList();
+                document.getElementById('assetInput').value = '';
+                document.getElementById('percentInput').value = '';
+            }
+        }
+
+        function updateList() {
+            const list = document.getElementById('assetList');
+            list.innerHTML = portfolio.map(item => `
+                <div class="flex justify-between bg-slate-900 p-2 rounded">
+                    <span>${item.asset}</span>
+                    <span class="font-bold text-cyan-400">${item.percent}%</span>
+                </div>
+            `).join('');
+        }
+
+        function analyze() {
+            if(portfolio.length === 0) return alert("Añade activos primero");
+            
+            document.getElementById('resultsArea').classList.remove('hidden');
+            setTimeout(() => { document.getElementById('healthBar').style.width = '75%'; }, 100);
+            document.getElementById('userYield').innerText = '+12.4%';
+
+            renderGalaxy();
+            window.scrollTo({ top: 500, behavior: 'smooth' });
+        }
+
+        function renderGalaxy() {
+            const ctx = document.getElementById('galaxyChart').getContext('2d');
+            
+            if(galaxyChart) galaxyChart.destroy();
+
+            // Simulación de datos: Riesgo (X) vs Retorno (Y)
+            const data = portfolio.map(item => ({
+                x: Math.random() * 10, 
+                y: Math.random() * 10, 
+                r: item.percent / 2
+            }));
+
+            galaxyChart = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Tus Activos',
+                        data: data,
+                        backgroundColor: 'rgba(34, 211, 238, 0.6)',
+                        borderColor: '#22d3ee'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: 'Riesgo', color: '#64748b' }, grid: { color: '#1e293b' } },
+                        y: { title: { display: true, text: 'Rendimiento', color: '#64748b' }, grid: { color: '#1e293b' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
