@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Verb Quest: Full Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #48bb78;
+            --error: #f56565;
+            --bg: #1a202c;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: var(--bg);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            width: 850px;
+            height: 550px;
+            background: #2d3748;
+            border: 4px solid #fff;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #stats {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 20px;
+        }
+
+        #world {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(to bottom, #5d9cec 0%, #5d9cec 70%, #3e4a59 70%);
+            position: relative;
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+
+        #player {
+            width: 35px;
+            height: 35px;
+            background: #f6ad55;
+            position: absolute;
+            bottom: 20px;
+            left: 50px;
+            transition: all 0.3s ease;
+            border: 2px solid #000;
+        }
+
+        #question-card {
+            background: #f7fafc;
+            color: #2d3748;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            text-align: center;
+            margin-top: 20px;
+            border: 4px solid #cbd5e0;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 11px;
+            padding: 15px;
+            cursor: pointer;
+            border: 3px solid #2d3748;
+            background: var(--primary);
+            color: white;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.95); }
+
+        .correct { background: var(--success) !important; animation: bounce 0.4s; }
+        .wrong { background: var(--error) !important; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="stats">
+        <span>SCORE: <span id="score">0</span></span>
+        <span>VERBS MASTERED: <span id="counter">0</span>/114</span>
+    </div>
+
+    <div id="world">
+        <div id="player"></div>
+    </div>
+
+    <div id="question-card">
+        <p id="instruction" style="font-size: 10px; color: #718096;">CHALLENGE:</p>
+        <h1 id="verb-display" style="margin: 10px 0; font-size: 24px;">READY?</h1>
+        <p id="tense-target" style="font-size: 12px; color: var(--primary); margin-bottom: 10px;"></p>
+        <div class="options" id="options-container">
+            <button onclick="startGame()" style="grid-column: span 2;">START MISSION</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Base de datos completa (114 verbos del archivo)
+    const dictionary = [
+        {pr:"accept", pa:"accepted", pp:"accepted"}, {pr:"add", pa:"added", pp:"added"},
+        {pr:"admit", pa:"admitted", pp:"admitted"}, {pr:"agree", pa:"agreed", pp:"agreed"},
+        {pr:"ask", pa:"asked", pp:"asked"}, {pr:"be", pa:"was/were", pp:"been"},
+        {pr:"beat", pa:"beat", pp:"beaten"}, {pr:"become", pa:"became", pp:"become"},
+        {pr:"begin", pa:"began", pp:"begun"}, {pr:"believe", pa:"believed", pp:"believed"},
+        {pr:"bend", pa:"bent", pp:"bent"}, {pr:"bite", pa:"bit", pp:"bitten"},
+        {pr:"blow", pa:"blew", pp:"blown"}, {pr:"borrow", pa:"borrowed", pp:"borrowed"},
+        {pr:"break", pa:"broke", pp:"broken"}, {pr:"bring", pa:"brought", pp:"brought"},
+        {pr:"brush", pa:"brushed", pp:"brushed"}, {pr:"build", pa:"built", pp:"built"},
+        {pr:"buy", pa:"bought", pp:"bought"}, {pr:"catch", pa:"caught", pp:"caught"},
+        {pr:"change", pa:"changed", pp:"changed"}, {pr:"clean", pa:"cleaned", pp:"cleaned"},
+        {pr:"climb", pa:"climbed", pp:"climbed"}, {pr:"close", pa:"closed", pp:"closed"},
+        {pr:"comb", pa:"combed", pp:"combed"}, {pr:"choose", pa:"chose", pp:"chosen"},
+        {pr:"come", pa:"came", pp:"come"}, {pr:"cost", pa:"cost", pp:"cost"},
+        {pr:"cut", pa:"cut", pp:"cut"}, {pr:"cough", pa:"coughed", pp:"coughed"},
+        {pr:"dance", pa:"danced", pp:"danced"}, {pr:"dig", pa:"dug", pp:"dug"},
+        {pr:"do", pa:"did", pp:"done"}, {pr:"draw", pa:"drew", pp:"drawn"},
+        {pr:"dream", pa:"dreamt", pp:"dreamt"}, {pr:"drink", pa:"drank", pp:"drunk"},
+        {pr:"drive", pa:"drove", pp:"driven"}, {pr:"eat", pa:"ate", pp:"eaten"},
+        {pr:"enjoy", pa:"enjoyed", pp:"enjoyed"}, {pr:"explain", pa:"explained", pp:"explained"},
+        {pr:"fall", pa:"fell", pp:"fallen"}, {pr:"feed", pa:"fed", pp:"fed"},
+        {pr:"feel", pa:"felt", pp:"felt"}, {pr:"fight", pa:"fought", pp:"fought"},
+        {pr:"find", pa:"found", pp:"found"}, {pr:"fill", pa:"filled", pp:"filled"},
+        {pr:"fly", pa:"flew", pp:"flown"}, {pr:"forget", pa:"forgot", pp:"forgotten"},
+        {pr:"forgive", pa:"forgave", pp:"forgiven"}, {pr:"freeze", pa:"froze", pp:"frozen"},
+        {pr:"get", pa:"got", pp:"gotten"}, {pr:"give", pa:"gave", pp:"given"},
+        {pr:"go", pa:"went", pp:"gone"}, {pr:"grow", pa:"grew", pp:"grown"},
+        {pr:"hang", pa:"hung", pp:"hung"}, {pr:"have", pa:"had", pp:"had"},
+        {pr:"happen", pa:"happened", pp:"happened"}, {pr:"hear", pa:"heard", pp:"heard"},
+        {pr:"hide", pa:"hid", pp:"hidden"}, {pr:"hit", pa:"hit", pp:"hit"},
+        {pr:"hold", pa:"held", pp:"held"}, {pr:"hurt", pa:"hurt", pp:"hurt"},
+        {pr:"keep", pa:"kept", pp:"kept"}, {pr:"know", pa:"knew", pp:"known"},
+        {pr:"learn", pa:"learnt", pp:"learnt"}, {pr:"leave", pa:"left", pp:"left"},
+        {pr:"let", pa:"let", pp:"let"}, {pr:"lend", pa:"lent", pp:"lent"},
+        {pr:"lie", pa:"lay", pp:"lain"}, {pr:"light", pa:"lit", pp:"lit"},
+        {pr:"lose", pa:"lost", pp:"lost"}, {pr:"make", pa:"made", pp:"made"},
+        {pr:"mean", pa:"meant", pp:"meant"}, {pr:"meet", pa:"met", pp:"met"},
+        {pr:"play", pa:"played", pp:"played"}, {pr:"pay", pa:"paid", pp:"paid"},
+        {pr:"put", pa:"put", pp:"put"}, {pr:"rain", pa:"rained", pp:"rained"},
+        {pr:"read", pa:"read", pp:"read"}, {pr:"ride", pa:"rode", pp:"ridden"},
+        {pr:"ring", pa:"rang", pp:"rung"}, {pr:"rise", pa:"rose", pp:"risen"},
+        {pr:"run", pa:"ran", pp:"run"}, {pr:"say", pa:"said", pp:"said"},
+        {pr:"see", pa:"saw", pp:"seen"}, {pr:"sell", pa:"sold", pp:"sold"},
+        {pr:"send", pa:"sent", pp:"sent"}, {pr:"shake", pa:"shook", pp:"shaken"},
+        {pr:"shine", pa:"shone", pp:"shone"}, {pr:"show", pa:"showed", pp:"showed"},
+        {pr:"sing", pa:"sang", pp:"sung"}, {pr:"sit", pa:"sat", pp:"sat"},
+        {pr:"sleep", pa:"slept", pp:"slept"}, {pr:"smell", pa:"smelt", pp:"smelt"},
+        {pr:"speak", pa:"spoke", pp:"spoken"}, {pr:"spend", pa:"spent", pp:"spent"},
+        {pr:"stand", pa:"stood", pp:"stood"}, {pr:"study", pa:"studied", pp:"studied"},
+        {pr:"sweep", pa:"swept", pp:"swept"}, {pr:"swim", pa:"swam", pp:"swum"},
+        {pr:"take", pa:"took", pp:"taken"}, {pr:"teach", pa:"taught", pp:"taught"},
+        {pr:"tell", pa:"told", pp:"told"}, {pr:"thank", pa:"thanked", pp:"thanked"},
+        {pr:"think", pa:"thought", pp:"thought"}, {pr:"throw", pa:"threw", pp:"thrown"},
+        {pr:"want", pa:"wanted", pp:"wanted"}, {pr:"wake", pa:"woke", pp:"woken"},
+        {pr:"wash", pa:"washed", pp:"washed"}, {pr:"wear", pa:"wore", pp:"worn"},
+        {pr:"win", pa:"won", pp:"won"}, {pr:"wish", pa:"wished", pp:"wished"},
+        {pr:"work", pa:"worked", pp:"worked"}, {pr:"write", pa:"wrote", pp:"written"}
+    ];
+
+    let score = 0;
+    let verbsMastered = 0;
+
+    function startGame() {
+        score = 0;
+        verbsMastered = 0;
+        updateUI();
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        const verb = dictionary[Math.floor(Math.random() * dictionary.length)];
+        const isPast = Math.random() > 0.5;
+        const targetLabel = isPast ? "PAST" : "PAST PARTICIPLE";
+        const correct = isPast ? verb.pa : verb.pp;
+
+        document.getElementById('verb-display').innerText = verb.pr.toUpperCase();
+        document.getElementById('tense-target').innerText = `Give me the ${targetLabel}`;
+
+        // Generar 3 opciones incorrectas aleatorias
+        let options = [correct];
+        while(options.length < 4) {
+            let rand = dictionary[Math.floor(Math.random() * dictionary.length)];
+            let wrongOpt = Math.random() > 0.5 ? rand.pa : rand.pp;
+            if(!options.includes(wrongOpt)) options.push(wrongOpt);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.onclick = () => check(opt, correct, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function check(val, ans, btn) {
+        if(val === ans) {
+            score += 10;
+            verbsMastered++;
+            btn.classList.add('correct');
+            document.getElementById('player').style.left = "600px";
+            setTimeout(() => {
+                document.getElementById('player').style.left = "50px";
+                updateUI();
+                nextQuestion();
+            }, 500);
+        } else {
+            score = Math.max(0, score - 5);
+            btn.classList.add('wrong');
+            updateUI();
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('counter').innerText = verbsMastered;
+    }
+</script>
+</body>
+</html>
