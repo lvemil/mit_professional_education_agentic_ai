@@ -1,0 +1,483 @@
+
+<style>
+  :root { --accent: #1D9E75; --accent-light: #E1F5EE; --accent-dark: #0F6E56; --trail: #BA7517; --trail-light: #FAEEDA; --strength: #534AB7; --strength-light: #EEEDFE; --rest: #888780; --rest-light: #F1EFE8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans, sans-serif); }
+  .app { padding: 1rem 0; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .header-icon { width: 44px; height: 44px; border-radius: var(--border-radius-lg, 12px); background: #1D9E75; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; flex-shrink: 0; }
+  .header-text h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+  .header-text p { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+  .today-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg, 12px); padding: 1.25rem; margin-bottom: 1.25rem; }
+  .today-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-tertiary); margin-bottom: 8px; }
+  .today-week { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .today-session { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; }
+  .session-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+  .badge-run { background: #E1F5EE; color: #0F6E56; }
+  .badge-strength { background: #EEEDFE; color: #3C3489; }
+  .badge-rest { background: #F1EFE8; color: #444441; }
+  .badge-trail { background: #FAEEDA; color: #633806; }
+  .badge-recovery { background: #E6F1FB; color: #0C447C; }
+  .badge-race { background: #FCEBEB; color: #791F1F; }
+  .session-detail { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-top: 10px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 10px; }
+  .nav-row { display: flex; gap: 8px; align-items: center; margin-bottom: 1.25rem; }
+  .nav-row select { flex: 1; }
+  .nav-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md, 8px); padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--color-text-primary); }
+  .nav-btn:hover { background: var(--color-background-secondary); }
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1.25rem; }
+  .day-col { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md, 8px); padding: 8px 6px; min-height: 90px; cursor: pointer; transition: border-color 0.15s; }
+  .day-col:hover { border-color: var(--color-border-primary); }
+  .day-col.active { border: 1.5px solid #1D9E75; }
+  .day-col.today-highlight { background: #E1F5EE; }
+  .day-name { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .day-date { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .day-icon { font-size: 18px; margin-bottom: 3px; }
+  .day-label { font-size: 9px; color: var(--color-text-tertiary); line-height: 1.3; }
+  .week-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .meta-chip { font-size: 11px; padding: 3px 8px; border-radius: 99px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); }
+  .meta-chip.carga { background: #FCEBEB; color: #791F1F; border-color: #F7C1C1; }
+  .meta-chip.descarga { background: #E1F5EE; color: #0F6E56; border-color: #9FE1CB; }
+  .meta-chip.tapering { background: #FAEEDA; color: #633806; border-color: #FAC775; }
+  .meta-chip.base { background: #E6F1FB; color: #0C447C; border-color: #B5D4F4; }
+  .meta-chip.fundamental { background: #EEEDFE; color: #3C3489; border-color: #CECBF6; }
+  .meta-chip.pico { background: #FAECE7; color: #712B13; border-color: #F5C4B3; }
+  .progress-section { margin-top: 1rem; }
+  .progress-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .progress-bar-wrap { background: var(--color-background-secondary); border-radius: 99px; height: 6px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: #1D9E75; border-radius: 99px; transition: width 0.4s; }
+  .notes-section { margin-top: 1rem; font-size: 12px; color: var(--color-text-tertiary); line-height: 1.6; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 10px; }
+  .notes-section strong { color: var(--color-text-secondary); }
+  .race-countdown { background: linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%); border-radius: var(--border-radius-lg, 12px); padding: 1rem 1.25rem; margin-bottom: 1.25rem; color: white; display: flex; align-items: center; gap: 16px; }
+  .countdown-num { font-size: 36px; font-weight: 500; line-height: 1; }
+  .countdown-text { font-size: 13px; opacity: 0.85; }
+  .countdown-label { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+  .talon-row { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+  .talon-label { font-size: 12px; color: var(--color-text-secondary); flex-shrink: 0; }
+  .talon-dots { display: flex; gap: 4px; }
+  .talon-dot { width: 20px; height: 20px; border-radius: 50%; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); }
+  .talon-dot.selected { background: #1D9E75; color: white; border-color: #1D9E75; }
+  .talon-dot.warn { background: #EF9F27; color: white; border-color: #EF9F27; }
+  .talon-dot.danger { background: #E24B4A; color: white; border-color: #E24B4A; }
+  .talon-msg { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+</style>
+
+<div class="app">
+  <h2 class="sr-only">Aplicación de plan de entrenamiento Trail La Marquesa 12K</h2>
+
+  <div class="race-countdown" id="countdown-bar">
+    <div>
+      <div class="countdown-num" id="days-left">—</div>
+      <div class="countdown-label">días para la carrera</div>
+    </div>
+    <div>
+      <div style="font-size:15px; font-weight:500;">Trail La Marquesa 12K</div>
+      <div class="countdown-text">20 de septiembre, 2026</div>
+      <div class="countdown-text" style="margin-top:2px;">3,103–3,344 msnm</div>
+    </div>
+    <div style="margin-left:auto; font-size:28px; opacity:0.8;"><i class="ti ti-mountain" aria-hidden="true"></i></div>
+  </div>
+
+  <div class="header">
+    <div class="header-icon"><i class="ti ti-run" aria-hidden="true"></i></div>
+    <div class="header-text">
+      <h2>Plan de entrenamiento</h2>
+      <p>Mayo – Septiembre 2026 · 19 semanas</p>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="prev-week" aria-label="Semana anterior">←</button>
+    <select id="week-select" aria-label="Seleccionar semana"></select>
+    <button class="nav-btn" id="next-week" aria-label="Semana siguiente">→</button>
+  </div>
+
+  <div class="week-meta" id="week-meta"></div>
+  <div class="week-grid" id="week-grid"></div>
+
+  <div class="today-card" id="session-detail-card">
+    <div class="today-label" id="detail-label">Sesión del día</div>
+    <div class="today-week" id="detail-week"></div>
+    <div class="today-session" id="detail-session"></div>
+    <div id="detail-badges" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+    <div class="session-detail" id="detail-body"></div>
+
+    <div class="talon-row" id="talon-row" style="display:none;">
+      <span class="talon-label"><i class="ti ti-foot-print" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Talón post-sesión:</span>
+      <div class="talon-dots" id="talon-dots"></div>
+    </div>
+    <div class="talon-msg" id="talon-msg"></div>
+
+    <div class="progress-section">
+      <div class="progress-label" id="progress-label"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar"></div></div>
+    </div>
+  </div>
+
+  <div class="notes-section">
+    <strong>Notas generales:</strong><br>
+    Regla del 10% · Plantillas en todas las sesiones · Dolor talón &gt;3/10 = repetir semana · Hidratación isotónica desde sem 18 · Mínimo 2 visitas aclimatación a La Marquesa (sems 26–27)
+  </div>
+</div>
+
+<script>
+const WEEKS = [
+  { num:10, label:"SEM 10", dates:"11–17 May", phase:"BASE", tipo:"CARGA", vol:"5.2 km",
+    days:[
+      {name:"Lun",date:"11 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min · Fuerza funcional"},
+      {name:"Mar",date:"12 May",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 7:30-8:00/km · Asfalto/pasto"},
+      {name:"Mié",date:"13 May",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"14 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min · Fuerza funcional"},
+      {name:"Vie",date:"15 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"16 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"17 May",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · 8×(3+1)min · 7:00-7:30/km · Arcilla plana",talon:true},
+    ]},
+  { num:11, label:"SEM 11", dates:"18–24 May", phase:"BASE", tipo:"CARGA", vol:"5.7 km",
+    days:[
+      {name:"Lun",date:"18 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"19 May",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"20 May",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"21 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"22 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"23 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"24 May",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · 9×(3+1)min · 7:00-7:30/km · Arcilla plana",talon:true},
+    ]},
+  { num:12, label:"SEM 12", dates:"25–31 May", phase:"BASE", tipo:"CARGA", vol:"6.2 km",
+    days:[
+      {name:"Lun",date:"25 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"26 May",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"27 May",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"28 May",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"29 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"30 May",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"31 May",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · 10×(3+1)min · 7:00-7:30/km · Arcilla plana",talon:true},
+    ]},
+  { num:13, label:"SEM 13", dates:"1–7 Jun", phase:"BASE", tipo:"DESCARGA", vol:"4.7 km",
+    days:[
+      {name:"Lun",date:"1 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"2 Jun",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 4×(3+1)min · 8:00/km · Ritmo suave"},
+      {name:"Mié",date:"3 Jun",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"4 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"5 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"6 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"7 Jun",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · 7×(3+1)min · 7:30/km · Arcilla plana ⬇ Semana descarga",talon:true},
+    ]},
+  { num:14, label:"SEM 14", dates:"8–14 Jun", phase:"BASE", tipo:"CARGA", vol:"6.8 km",
+    days:[
+      {name:"Lun",date:"8 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"9 Jun",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"10 Jun",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"11 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"12 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"13 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"14 Jun",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 25 min · 7:00-7:30/km",talon:true},
+    ]},
+  { num:15, label:"SEM 15", dates:"15–21 Jun", phase:"BASE", tipo:"CARGA", vol:"7.5 km",
+    days:[
+      {name:"Lun",date:"15 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"16 Jun",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"17 Jun",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"18 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"19 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"20 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"21 Jun",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 30 min · 7:00-7:30/km",talon:true},
+    ]},
+  { num:16, label:"SEM 16", dates:"22–28 Jun", phase:"BASE", tipo:"CARGA", vol:"8.3 km",
+    days:[
+      {name:"Lun",date:"22 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"23 Jun",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 6×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"24 Jun",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"25 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"26 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"27 Jun",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"28 Jun",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 35 min · 7:00-7:30/km",talon:true},
+    ]},
+  { num:17, label:"SEM 17", dates:"29 Jun–5 Jul", phase:"BASE", tipo:"DESCARGA", vol:"6.3 km",
+    days:[
+      {name:"Lun",date:"29 Jun",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"30 Jun",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 4×(3+1)min · 8:00/km · Ritmo suave"},
+      {name:"Mié",date:"1 Jul",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"2 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"3 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"4 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"5 Jul",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 25 min · 7:30/km ⬇ Semana descarga",talon:true},
+    ]},
+  { num:18, label:"SEM 18", dates:"6–12 Jul", phase:"BASE", tipo:"CARGA", vol:"9.1 km",
+    days:[
+      {name:"Lun",date:"6 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"7 Jul",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 6×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"8 Jul",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"9 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"10 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"11 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"12 Jul",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 40 min · 7:00-7:30/km · Hidratación isotónica",talon:true},
+    ]},
+  { num:19, label:"SEM 19", dates:"13–19 Jul", phase:"BASE", tipo:"CARGA", vol:"10.0 km",
+    days:[
+      {name:"Lun",date:"13 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"14 Jul",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 7×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"15 Jul",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"16 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"17 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"18 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"19 Jul",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 47 min (~6km) · 7:00-7:30/km",talon:true},
+    ]},
+  { num:20, label:"SEM 20", dates:"20–26 Jul", phase:"FUNDAMENTAL", tipo:"CARGA", vol:"11.0 km",
+    days:[
+      {name:"Lun",date:"20 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"21 Jul",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 7×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"22 Jul",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"23 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"24 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"25 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"26 Jul",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 54 min (~7km) · 7:00-7:30/km",talon:true},
+    ]},
+  { num:21, label:"SEM 21", dates:"27 Jul–2 Ago", phase:"FUNDAMENTAL", tipo:"DESCARGA", vol:"8.2 km",
+    days:[
+      {name:"Lun",date:"27 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"28 Jul",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 4×(3+1)min · 8:00/km · Ritmo suave"},
+      {name:"Mié",date:"29 Jul",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"30 Jul",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"31 Jul",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"1 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"2 Ago",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 38 min (~5km) · 7:30/km ⬇ Semana descarga",talon:true},
+    ]},
+  { num:22, label:"SEM 22", dates:"3–9 Ago", phase:"FUNDAMENTAL", tipo:"CARGA", vol:"12.1 km",
+    days:[
+      {name:"Lun",date:"3 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"4 Ago",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 7×(3+1)min · 7:30-8:00/km"},
+      {name:"Mié",date:"5 Ago",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"6 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"7 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"8 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"9 Ago",type:"trail",icon:"🌲",short:"Trail",detail:"Bosque Tlalpan · Primera visita trail · 4km exploratorio · Caminata en subidas",talon:true},
+    ]},
+  { num:23, label:"SEM 23", dates:"10–16 Ago", phase:"FUNDAMENTAL", tipo:"CARGA", vol:"13.3 km",
+    days:[
+      {name:"Lun",date:"10 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"11 Ago",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 8×(3+1)min · 7:30/km"},
+      {name:"Mié",date:"12 Ago",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"13 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"14 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"15 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"16 Ago",type:"trail",icon:"🌲",short:"Trail",detail:"Bosque Tlalpan · Trail 5km · Trote suave · Caminata en subidas",talon:true},
+    ]},
+  { num:24, label:"SEM 24", dates:"17–23 Ago", phase:"FUNDAMENTAL", tipo:"CARGA ★", vol:"14.8 km",
+    days:[
+      {name:"Lun",date:"17 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"18 Ago",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 8×(3+1)min · 7:30/km"},
+      {name:"Mié",date:"19 Ago",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"20 Ago",type:"trail",icon:"🌲",short:"3ra sesión",detail:"Bosque Tlalpan · Trail específico 5-6km · Cuesta + irregular"},
+      {name:"Vie",date:"21 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"22 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"23 Ago",type:"run",icon:"🏃",short:"Running",detail:"Cuemanco · Trote continuo 60 min (~8km) · 7:00-7:30/km",talon:true},
+    ]},
+  { num:25, label:"SEM 25", dates:"24–30 Ago", phase:"PICO", tipo:"DESCARGA", vol:"11.1 km",
+    days:[
+      {name:"Lun",date:"24 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"25 Ago",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 8:00/km · Ritmo suave"},
+      {name:"Mié",date:"26 Ago",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"27 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Vie",date:"28 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"29 Ago",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"30 Ago",type:"trail",icon:"🌲",short:"Trail",detail:"Bosque Tlalpan · Trail suave 4km ⬇ Semana descarga",talon:true},
+    ]},
+  { num:26, label:"SEM 26", dates:"31 Ago–6 Sep", phase:"PICO", tipo:"CARGA", vol:"16.3 km",
+    days:[
+      {name:"Lun",date:"31 Ago",type:"strength",icon:"💪",short:"Fuerza",detail:"Apple Fitness+ 20 min"},
+      {name:"Mar",date:"1 Sep",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 7×(3+1)min · 7:30/km"},
+      {name:"Mié",date:"2 Sep",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"3 Sep",type:"trail",icon:"🏔️",short:"Aclimatación",detail:"La Marquesa · Aclimatación trail 5-6km · Altitud 3,100m+"},
+      {name:"Vie",date:"4 Sep",type:"rest",icon:"⚫",short:"Descanso",detail:"Día de descanso completo"},
+      {name:"Sáb",date:"5 Sep",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"6 Sep",type:"trail",icon:"🌲",short:"Trail",detail:"Bosque Tlalpan · Trail real 8-9km · Cuestas + bajadas",talon:true},
+    ]},
+  { num:27, label:"SEM 27", dates:"7–13 Sep", phase:"TAPERING", tipo:"TAPERING", vol:"11.4 km",
+    days:[
+      {name:"Lun",date:"7 Sep",type:"strength",icon:"💪",short:"Fuerza ligera",detail:"15 min · Solo movilidad"},
+      {name:"Mar",date:"8 Sep",type:"run",icon:"🏃",short:"Running",detail:"Tlalpan · 5×(3+1)min · 8:00/km · Muy suave"},
+      {name:"Mié",date:"9 Sep",type:"recovery",icon:"🧘",short:"Recuperación",detail:"Estiramientos tobillo + TENS"},
+      {name:"Jue",date:"10 Sep",type:"trail",icon:"🌲",short:"3ra sesión",detail:"Tlalpan · Trail suave 3-4km"},
+      {name:"Vie",date:"11 Sep",type:"rest",icon:"⚫",short:"Descanso total",detail:"Descanso total"},
+      {name:"Sáb",date:"12 Sep",type:"rest",icon:"⚫",short:"Descanso",detail:"Día libre"},
+      {name:"Dom",date:"13 Sep",type:"run",icon:"🏃",short:"Running",detail:"Trail suave · 40 min · 7:30/km ⬇ Tapering -30%",talon:true},
+    ]},
+  { num:28, label:"SEM 28", dates:"14–20 Sep", phase:"TAPERING", tipo:"TAPERING", vol:"7.2 km + carrera",
+    days:[
+      {name:"Lun",date:"14 Sep",type:"recovery",icon:"🧘",short:"Movilidad",detail:"Solo movilidad y estiramientos"},
+      {name:"Mar",date:"15 Sep",type:"run",icon:"🏃",short:"Activación",detail:"Tlalpan · 3×(3+1)min · 8:00/km · Solo activación"},
+      {name:"Mié",date:"16 Sep",type:"recovery",icon:"🧘",short:"Descanso activo",detail:"Estiramientos · Descanso activo"},
+      {name:"Jue",date:"17 Sep",type:"rest",icon:"🚶",short:"Caminata",detail:"Caminata ligera 20-30 min"},
+      {name:"Vie",date:"18 Sep",type:"rest",icon:"⚫",short:"Descanso total",detail:"Descanso total · Preparar mochila"},
+      {name:"Sáb",date:"19 Sep",type:"rest",icon:"⚫",short:"Descanso",detail:"Descanso total · Hidratación · Dormir temprano"},
+      {name:"Dom",date:"20 Sep",type:"race",icon:"🏔️",short:"¡CARRERA!",detail:"Trail 12K La Marquesa · 3,103-3,344 msnm · ¡Día de carrera!"},
+    ]},
+];
+
+const RACE_DATE = new Date(2026, 8, 20);
+const TODAY = new Date(2026, 4, 10);
+
+function daysUntilRace() {
+  const diff = Math.ceil((RACE_DATE - TODAY) / (1000*60*60*24));
+  return diff;
+}
+
+function getTodayWeekIndex() {
+  const todayStr = "10 May";
+  for(let wi=0; wi<WEEKS.length; wi++) {
+    const w = WEEKS[wi];
+    for(let di=0; di<w.days.length; di++) {
+      if(w.days[di].date === todayStr) return {wi, di};
+    }
+  }
+  return {wi:0, di:0};
+}
+
+let currentWeekIdx = 0;
+let selectedDayIdx = 0;
+let talonRatings = {};
+
+function phaseClass(phase) {
+  const m = {BASE:'base',FUNDAMENTAL:'fundamental',PICO:'pico',TAPERING:'tapering'};
+  return m[phase] || 'base';
+}
+
+function tipoClass(tipo) {
+  if(tipo.includes('DESCARGA')) return 'descarga';
+  if(tipo.includes('TAPERING')) return 'tapering';
+  if(tipo.includes('CARGA')) return 'carga';
+  return '';
+}
+
+function badgeClass(type) {
+  const m = {run:'badge-run', strength:'badge-strength', rest:'badge-rest', trail:'badge-trail', recovery:'badge-recovery', race:'badge-race'};
+  return m[type] || 'badge-rest';
+}
+
+function badgeLabel(type) {
+  const m = {run:'Running', strength:'Fuerza', rest:'Descanso', trail:'Trail', recovery:'Recuperación', race:'Carrera'};
+  return m[type] || type;
+}
+
+function renderWeekSelect() {
+  const sel = document.getElementById('week-select');
+  sel.innerHTML = '';
+  WEEKS.forEach((w,i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${w.label} · ${w.dates} · ${w.phase}`;
+    sel.appendChild(opt);
+  });
+  sel.value = currentWeekIdx;
+}
+
+function renderWeekMeta() {
+  const w = WEEKS[currentWeekIdx];
+  const el = document.getElementById('week-meta');
+  el.innerHTML = `
+    <span class="meta-chip ${phaseClass(w.phase)}">${w.phase}</span>
+    <span class="meta-chip ${tipoClass(w.tipo)}">${w.tipo}</span>
+    <span class="meta-chip">Vol: ${w.vol}</span>
+  `;
+}
+
+function renderGrid() {
+  const w = WEEKS[currentWeekIdx];
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  const {wi: todayWi, di: todayDi} = getTodayWeekIndex();
+  w.days.forEach((d,i) => {
+    const isToday = currentWeekIdx === todayWi && i === todayDi;
+    const isActive = i === selectedDayIdx;
+    const col = document.createElement('div');
+    col.className = `day-col${isActive?' active':''}${isToday?' today-highlight':''}`;
+    col.innerHTML = `<div class="day-name">${d.name}</div><div class="day-date" style="font-size:9px;">${d.date}</div><div class="day-icon">${d.icon}</div><div class="day-label">${d.short}</div>`;
+    col.addEventListener('click', ()=>{ selectedDayIdx=i; render(); });
+    grid.appendChild(col);
+  });
+}
+
+function renderDetail() {
+  const w = WEEKS[currentWeekIdx];
+  const d = w.days[selectedDayIdx];
+  const {wi: todayWi, di: todayDi} = getTodayWeekIndex();
+  const isToday = currentWeekIdx === todayWi && selectedDayIdx === todayDi;
+
+  document.getElementById('detail-label').textContent = isToday ? 'Sesión de hoy' : `Sesión · ${d.date}`;
+  document.getElementById('detail-week').textContent = `${w.label} · ${w.dates}`;
+  document.getElementById('detail-session').textContent = `${d.icon} ${d.short}`;
+
+  const badges = document.getElementById('detail-badges');
+  badges.innerHTML = `<span class="session-badge ${badgeClass(d.type)}">${badgeLabel(d.type)}</span>`;
+  if(isToday) badges.innerHTML += `<span class="session-badge" style="background:var(--color-background-info);color:var(--color-text-info);">Hoy</span>`;
+
+  document.getElementById('detail-body').textContent = d.detail;
+
+  const talonRow = document.getElementById('talon-row');
+  const talonMsg = document.getElementById('talon-msg');
+  if(d.talon) {
+    talonRow.style.display = 'flex';
+    renderTalonDots(w.num, selectedDayIdx);
+  } else {
+    talonRow.style.display = 'none';
+    talonMsg.textContent = '';
+  }
+
+  const totalWeeks = WEEKS.length;
+  const done = currentWeekIdx;
+  const pct = Math.round((done/totalWeeks)*100);
+  document.getElementById('progress-label').textContent = `Progreso: semana ${currentWeekIdx+1} de ${totalWeeks} (${pct}%)`;
+  document.getElementById('progress-bar').style.width = pct+'%';
+}
+
+function renderTalonDots(weekNum, dayIdx) {
+  const key = `${weekNum}-${dayIdx}`;
+  const rating = talonRatings[key] || 0;
+  const dots = document.getElementById('talon-dots');
+  dots.innerHTML = '';
+  for(let n=1;n<=10;n++){
+    const dot = document.createElement('div');
+    dot.className = 'talon-dot';
+    dot.textContent = n;
+    if(rating===n) {
+      dot.classList.add(n<=3?'selected': n<=6?'warn':'danger');
+    }
+    dot.addEventListener('click',()=>{
+      talonRatings[key]=n;
+      renderTalonDots(weekNum, dayIdx);
+      const msg = document.getElementById('talon-msg');
+      if(n<=3) msg.textContent = '';
+      else if(n<=6) msg.textContent = '⚠ Monitorea el talón. Considera ajustar la carga.';
+      else msg.textContent = '🛑 Dolor >6/10 · Repite la semana o consulta al fisioterapeuta.';
+    });
+    dots.appendChild(dot);
+  }
+}
+
+function render() {
+  renderWeekMeta();
+  renderGrid();
+  renderDetail();
+  document.getElementById('week-select').value = currentWeekIdx;
+}
+
+document.getElementById('days-left').textContent = daysUntilRace();
+
+renderWeekSelect();
+
+const {wi: initWi, di: initDi} = getTodayWeekIndex();
+currentWeekIdx = initWi;
+selectedDayIdx = initDi;
+render();
+
+document.getElementById('week-select').addEventListener('change', e => {
+  currentWeekIdx = parseInt(e.target.value);
+  selectedDayIdx = 0;
+  render();
+});
+document.getElementById('prev-week').addEventListener('click', ()=>{
+  if(currentWeekIdx>0){ currentWeekIdx--; selectedDayIdx=0; render(); }
+});
+document.getElementById('next-week').addEventListener('click', ()=>{
+  if(currentWeekIdx<WEEKS.length-1){ currentWeekIdx++; selectedDayIdx=0; render(); }
+});
+</script>
