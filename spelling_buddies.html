@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spelling Buddies</title>
+    <style>
+        :root {
+            --primary-bg: #E0F7FA; /* Light sky blue */
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --btn-audio: #29B6F6;
+            --btn-correct: #66BB6A;
+            --btn-try: #FFA726;
+            --footer-bg: #0277BD;
+            --honey: #FFC107;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .logo { font-size: 1.2rem; font-weight: bold; }
+        
+        .score-board {
+            background-color: var(--honey);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            gap: 1.5rem;
+        }
+
+        .word-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .word-display {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .word-category {
+            font-size: 1rem;
+            color: #777;
+        }
+
+        /* Buttons */
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-audio {
+            background-color: var(--btn-audio);
+            width: 100%;
+            max-width: 250px;
+            box-shadow: 0 4px 0 #039BE5;
+            font-size: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn-correct {
+            flex: 1;
+            background-color: var(--btn-correct);
+            box-shadow: 0 4px 0 #43A047;
+        }
+
+        .btn-try {
+            flex: 1;
+            background-color: var(--btn-try);
+            box-shadow: 0 4px 0 #F57C00;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--footer-bg);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+        }
+
+        .btn-switch {
+            background-color: transparent;
+            border: 2px solid white;
+            padding: 0.5rem 2rem;
+            border-radius: 25px;
+            font-size: 1rem;
+        }
+
+        /* Animations */
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .success-anim { animation: pulseSuccess 0.5s ease; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🐝 Spelling Buddies</div>
+        <div class="score-board">
+            🍯 <span id="score-text">0 Drops</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="word-card" id="word-card">
+            <div class="word-display" id="word-display">WORD</div>
+            <div class="word-category" id="word-category">Level: Beginner</div>
+        </div>
+
+        <button class="btn-audio" onclick="playAudio()">
+            🔊 Play Word
+        </button>
+
+        <div class="controls">
+            <button class="btn-try" onclick="handleTryAgain()">
+                🔄 Try Again
+            </button>
+            <button class="btn-correct" onclick="handleCorrect()">
+                ✅ Correct!
+            </button>
+        </div>
+    </main>
+
+    <footer>
+        <div class="progress-text" id="progress-text">Word 1 of 10</div>
+        <button class="btn-switch" onclick="switchRoles()">
+            🔁 Switch Roles
+        </button>
+    </footer>
+
+    <script>
+        // Database of words
+        const wordList = [
+            { word: "Bumblebee", category: "Insects" },
+            { word: "Butterfly", category: "Insects" },
+            { word: "Elephant", category: "Animals" },
+            { word: "Astronaut", category: "Space" },
+            { word: "Chocolate", category: "Food" },
+            { word: "Adventure", category: "Concepts" },
+            { word: "Dinosaur", category: "History" },
+            { word: "Umbrella", category: "Objects" },
+            { word: "Telescope", category: "Science" },
+            { word: "Kangaroo", category: "Animals" }
+        ];
+
+        // State variables
+        let currentIndex = 0;
+        let teamScore = 0;
+
+        // DOM Elements
+        const wordDisplay = document.getElementById('word-display');
+        const wordCategory = document.getElementById('word-category');
+        const scoreText = document.getElementById('score-text');
+        const progressText = document.getElementById('progress-text');
+        const wordCard = document.getElementById('word-card');
+
+        // Initialize App
+        function initApp() {
+            // Shuffle array for randomness (simple implementation)
+            wordList.sort(() => Math.random() - 0.5);
+            loadWord();
+        }
+
+        // Load current word to UI
+        function loadWord() {
+            if (currentIndex >= wordList.length) {
+                wordDisplay.innerText = "YOU DID IT!";
+                wordCategory.innerText = "All words completed 🍯🐝";
+                return;
+            }
+            const currentItem = wordList[currentIndex];
+            // Add spaces between letters for the spelling bee format
+            wordDisplay.innerText = currentItem.word.split('').join(' '); 
+            wordCategory.innerText = `Category: ${currentItem.category}`;
+            progressText.innerText = `Word ${currentIndex + 1} of ${wordList.length}`;
+        }
+
+        // Web Speech API for Text-to-Speech
+        function playAudio() {
+            if (currentIndex >= wordList.length) return;
+            
+            const wordToSpeak = wordList[currentIndex].word;
+            const utterance = new SpeechSynthesisUtterance(wordToSpeak);
+            
+            // Force English pronunciation
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8; // Slightly slower for clearer dictation
+            
+            window.speechSynthesis.cancel(); // Stop any current audio
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Logic for Correct Button (Collaborative scoring)
+        function handleCorrect() {
+            if (currentIndex >= wordList.length) return;
+
+            // Visual feedback
+            wordCard.classList.add('success-anim');
+            setTimeout(() => wordCard.classList.remove('success-anim'), 500);
+
+            // Update shared score
+            teamScore++;
+            scoreText.innerText = `${teamScore} Drop${teamScore !== 1 ? 's' : ''}`;
+            
+            // Move to next word
+            currentIndex++;
+            loadWord();
+        }
+
+        // Logic for Try Again Button
+        function handleTryAgain() {
+            if (currentIndex >= wordList.length) return;
+            // No points deducted, just visual feedback to try again
+            wordDisplay.style.color = "#F57C00";
+            setTimeout(() => wordDisplay.style.color = "var(--text-main)", 500);
+        }
+
+        // Switch Roles Logic
+        function switchRoles() {
+            alert("🐝 Switch Roles!\n\nPass the device to your buddy. The current Speller is now the Judge!");
+        }
+
+        // Start the app
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
